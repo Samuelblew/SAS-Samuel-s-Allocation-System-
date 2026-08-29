@@ -17,16 +17,16 @@ import {
   getVisibleNavGroups,
 } from '../lib/nav'
 
-const KumulusLogo = lazy(() =>
-  import('./KumulusLogo').then((module) => ({ default: module.KumulusLogo })),
+const InteractiveLogo = lazy(() =>
+  import('./InteractiveLogo').then((module) => ({ default: module.InteractiveLogo })),
 )
 
 function LogoFallback() {
   return (
     <img
-      src="/brand/kumulus.png"
+      src="/brand/logo-fallback.png"
       alt=""
-      className="ias-kumulus-logo ias-header-brand-logo"
+      className="ias-interactive-logo ias-header-brand-logo"
       aria-hidden
     />
   )
@@ -62,7 +62,7 @@ export function Layout() {
         <header className="ias-header-pill">
           <Link to="/" className="ias-header-brand">
             <Suspense fallback={<LogoFallback />}>
-              <KumulusLogo className="ias-header-brand-logo" />
+              <InteractiveLogo className="ias-header-brand-logo" />
             </Suspense>
             <span className="ias-brand-name ias-header-brand-name">{t('app.name')}</span>
           </Link>

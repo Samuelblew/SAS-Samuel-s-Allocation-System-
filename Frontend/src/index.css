@@ -1102,7 +1102,7 @@ input.ias-input:not([type='checkbox']) {
   box-shadow: 0 2px 8px rgba(13, 24, 63, 0.12);
 }
 
-/* ——— App shell layout (Kumulus-inspired) ——— */
+/* ——— App shell layout ——— */
 
 @keyframes ias-aurora-move {
   0% {
@@ -1202,7 +1202,7 @@ input.ias-input:not([type='checkbox']) {
     var(--ias-card-shadow);
 }
 
-/* ——— App frame (Kumulus-style main container) ——— */
+/* ——— App frame (main container) ——— */
 
 .ias-app-frame {
   position: relative;
@@ -1902,20 +1902,20 @@ input.ias-input:not([type='checkbox']) {
   box-shadow: 0 4px 16px rgba(0, 102, 255, 0.3);
 }
 
-.ias-kumulus-logo {
+.ias-interactive-logo {
   position: relative;
   flex-shrink: 0;
   width: 2.5rem;
   height: 2.5rem;
 }
 
-.ias-header-brand .ias-kumulus-logo,
+.ias-header-brand .ias-interactive-logo,
 .ias-header-brand-logo {
   width: 2rem;
   height: 2rem;
 }
 
-.ias-kumulus-logo__canvas {
+.ias-interactive-logo__canvas {
   position: relative;
   z-index: 1;
   width: 100% !important;
@@ -1923,7 +1923,7 @@ input.ias-input:not([type='checkbox']) {
   display: block;
 }
 
-.ias-kumulus-logo__fallback {
+.ias-interactive-logo__fallback {
   position: absolute;
   inset: 0;
   z-index: 0;
@@ -1935,12 +1935,12 @@ input.ias-input:not([type='checkbox']) {
   border-radius: 0.375rem;
 }
 
-.ias-header-brand .ias-kumulus-logo__fallback,
-.ias-header-brand > img.ias-kumulus-logo {
+.ias-header-brand .ias-interactive-logo__fallback,
+.ias-header-brand > img.ias-interactive-logo {
   border-radius: 0.375rem;
 }
 
-.ias-kumulus-logo__fallback--hidden {
+.ias-interactive-logo__fallback--hidden {
   opacity: 0;
 }
 

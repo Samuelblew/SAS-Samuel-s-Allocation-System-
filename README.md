@@ -4,6 +4,12 @@ Plataforma de alocação de pessoas em consultorias: visibilidade operacional, c
 
 **Cloud alvo:** Microsoft Azure (futuro).
 
+## Sobre este projeto
+
+Este projeto nasceu de uma demanda real: fui requisitado para desenvolver um sistema interno de alocação de pessoas para gerentes de projeto em uma consultoria onde trabalhei. O MVP seria apresentado internamente, mas foi descartado — meu desligamento da empresa aconteceu antes da apresentação, e o projeto ficou sem dono. Depois de sair, resgatei o código, removi toda referência à empresa original, refiz partes do meu jeito e publiquei aqui para não deixar o trabalho se perder.
+
+Um detalhe do frontend: o logo animado no cabeçalho é um modelo 3D interativo (gira ao passar o mouse, responde a clique) que modelei eu mesmo no Blender e integrei via React Three Fiber/Three.js — dá pra ver o projeto de origem em [`Frontend/3D/`](Frontend/3D/).
+
 ## Documentação
 
 | Arquivo | Conteúdo |

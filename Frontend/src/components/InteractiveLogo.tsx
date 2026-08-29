@@ -4,15 +4,15 @@ import { Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import type { Group } from 'three'
 import { MathUtils } from 'three'
 
-const MODEL_PATH = '/brand/Kumulus.glb'
-const FALLBACK_PATH = '/brand/kumulus.png'
+const MODEL_PATH = '/brand/logo.glb'
+const FALLBACK_PATH = '/brand/logo-fallback.png'
 const BASE_SCALE = 0.32
 const HOVER_SCALE = BASE_SCALE * 1.06
 const HOVER_TILT_RAD = MathUtils.degToRad(15)
 const SPIN_SPEED = 4.2
 const LERP_SPEED = 0.14
 
-function KumulusModel({
+function LogoModel({
   hovered,
   spinning,
   resetting,
@@ -93,7 +93,7 @@ function CanvasController({ active }: { active: boolean }) {
   return null
 }
 
-export function KumulusLogo({ className = '' }: { className?: string }) {
+export function InteractiveLogo({ className = '' }: { className?: string }) {
   const [hovered, setHovered] = useState(false)
   const [spinning, setSpinning] = useState(false)
   const [resetting, setResetting] = useState(false)
@@ -120,7 +120,7 @@ export function KumulusLogo({ className = '' }: { className?: string }) {
 
   return (
     <div
-      className={`ias-kumulus-logo ${className}`.trim()}
+      className={`ias-interactive-logo ${className}`.trim()}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={handleMouseLeave}
       onClick={handleClick}
@@ -129,10 +129,10 @@ export function KumulusLogo({ className = '' }: { className?: string }) {
       <img
         src={FALLBACK_PATH}
         alt=""
-        className={`ias-kumulus-logo__fallback${ready ? ' ias-kumulus-logo__fallback--hidden' : ''}`}
+        className={`ias-interactive-logo__fallback${ready ? ' ias-interactive-logo__fallback--hidden' : ''}`}
       />
       <Canvas
-        className="ias-kumulus-logo__canvas"
+        className="ias-interactive-logo__canvas"
         camera={{ position: [0, 0, 2.6], fov: 38 }}
         dpr={[1, 2]}
         gl={{ alpha: true, antialias: true, powerPreference: 'high-performance' }}
@@ -146,7 +146,7 @@ export function KumulusLogo({ className = '' }: { className?: string }) {
         <directionalLight position={[4, 5, 6]} intensity={1.35} />
         <directionalLight position={[-3, -2, -4]} intensity={0.3} />
         <Suspense fallback={null}>
-          <KumulusModel
+          <LogoModel
             hovered={hovered}
             spinning={spinning}
             resetting={resetting}
