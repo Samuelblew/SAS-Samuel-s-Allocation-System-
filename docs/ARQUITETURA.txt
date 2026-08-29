@@ -1,0 +1,104 @@
+================================================================================
+  IAS — ARQUITETURA TÉCNICA
+  Atualizado: 2026-06-03
+================================================================================
+
+Produto (problema, personas, camadas de negócio): docs/REQUISITOS_PRODUTO.txt
+Implementação (checklist, convenções): docs/DESENVOLVIMENTO.txt
+
+
+PRINCÍPIOS
+----------
+- Domínio primeiro; regras no núcleo, não na UI nem só no banco
+- Dados confiáveis antes de IA (Camadas 1–4 antes da 5)
+- API-first, REST /api/v1/, multi-tenant (tenant_id em tudo)
+- Monólito modular; Azure no deploy; MySQL local sem Docker
+
+
+STACK
+-----
+Backend     .NET 10 LTS + ASP.NET Core + EF Core 10 + MySQL (Microting EF provider 10.x em dev; Pomelo 10 em roadmap)
+Frontend    React 19 + TypeScript 5.7+ + Vite 6 + shadcn/ui + Tailwind
+Banco dev   MySQL 8 nativo Windows, banco ias_dev, porta 3306
+Banco Azure Azure Database for MySQL Flexible Server 8.x
+Auth        Entra ID (mock JWT em dev)
+Deploy API  Azure Container Apps (imagem aspnet:10.0)
+Deploy UI   Azure Static Web Apps
+Cache       Redis — Fase 2+ / Azure (opcional em dev Fase 0)
+
+Não usar no MVP: microserviços, MongoDB, GraphQL, IA/LLM, Docker local,
+.NET 8/9, PostgreSQL.
+
+
+ARQUITETURA
+-----------
+Clean Architecture + DDD tático:
+
+  Api → Application (Commands/Queries) → Domain → Infrastructure
+
+Módulos: People, Projects, Allocation, Capacity (2), Matching (3),
+Finance (4), Identity, Notifications.
+
+
+ESTRUTURA DE PASTAS
+-------------------
+IAS/
+  src/IAS.Domain|Application|Infrastructure|Api|Workers
+  Frontend/
+  Backend/
+  tests/IAS.*.Tests/
+  infra/bicep/
+  docs/
+
+
+MODELO DE DADOS (RESUMO)
+------------------------
+Todas as tabelas: id (UUID), tenant_id, audit fields, deleted_at (soft delete).
+Campos flexíveis: JSON (MySQL 8).
+
+Entidades: Tenant, User, Person, Skill, PersonSkill, Unavailability, Client,
+Project, AllocationNeed, Allocation, AllocationConflict, AuditLog.
+
+Ver implementação detalhada em migrations; conceito em REQUISITOS_PRODUTO §4.
+
+
+REGRAS DE NEGÓCIO
+-----------------
+RN-001 Superalocação: soma dedication_percent por pessoa/semana ≤ 100
+RN-002 Pessoa inativa (offboarded etc.) não recebe nova alocação
+RN-003 AllocationNeed: status open | partially_filled | filled
+RN-004 Capacidade efetiva (Camada 2)
+RN-005 Custo de alocação (Camada 4)
+RN-006 Margem de projeto (Camada 4)
+RN-007 Matching score determinístico com breakdown (Camada 3)
+
+
+APIs (RESUMO)
+-------------
+Base: /api/v1/ | Auth: Bearer JWT | Tenant: token ou X-Tenant-Id (dev)
+Erros: RFC 7807 | Paginação: ?page=&pageSize=
+
+Camada 1: /people, /skills, /clients, /projects, /allocation-needs,
+          /allocations, /allocations/conflicts, visões projeto↔pessoa
+
+Camada 2+: /capacity/*, POST /simulations/project-feasibility
+Camada 3+: GET /allocation-needs/{id}/candidates
+Camada 4+: /projects/{id}/financials, /financials/*
+
+
+ROADMAP TÉCNICO
+---------------
+Fase 0 (semanas 1–2): solution, MySQL, multi-tenant, auth mock, Swagger, CI — parcial (falta auth mock, CI, frontend)
+Fase 1 / Camada 1: CRUD + alocações + superalocação + visões — backend CONCLUÍDO (2026-06-03)
+Fase 2 / Camada 2: capacidade, bench, gaps, simulação
+Fase 3 / Camada 3: matching com score explicado
+Fase 4 / Camada 4: margem e alertas financeiros
+Fase 5 / Camada 5: IA — só após 3+ meses de dados reais em produção
+
+
+UI (REFERÊNCIA RÁPIDA)
+-----------------------
+/ Dashboard | /people | /projects | /allocations
+/capacity (2) | /matching (3) | /financials (4) | /settings
+
+================================================================================

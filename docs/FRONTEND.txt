@@ -1,0 +1,149 @@
+================================================================================
+  IAS — GUIA DO FRONTEND
+  Atualizado: 2026-06-20 (Sprint mobile)
+================================================================================
+
+STACK
+-----
+  React 19 + Vite 6 + TypeScript 5.8
+  TanStack Query v5 — cache e mutations
+  React Hook Form + Zod — formulários e validação client-side
+  Tailwind CSS v4 — tokens `ias-*` em index.css
+  Vitest + Testing Library — testes unitários e de componente
+
+LOCAL
+-----
+  cd Frontend
+  npm install
+  npm run dev          → http://localhost:5173 (proxy /api → :5203)
+  npm run test         → testes (Vitest)
+  npm run lint         → ESLint
+  npm run build        → tsc + vite build
+
+CI
+--
+  .github/workflows/frontend-ci.yml
+  Em cada PR/push em Frontend/: lint + test + build (Node 22)
+
+ESTRUTURA
+---------
+  Frontend/src/
+    pages/           — telas por rota (uma página = um domínio)
+    components/      — UI reutilizável (DataTable, StatCard, FormField…)
+    components/forms/— FormField (label + erro Zod/RHF)
+    context/         — Theme, Locale (i18n), Settings (tenant/actor)
+    lib/
+      api.ts         — cliente HTTP + ApiError (RFC 7807)
+      errors.ts      — getErrorMessage()
+      schemas/       — Zod schemas + to*Payload() por entidade
+      ui.ts          — classes CSS do design system
+      types.ts       — tipos espelhando DTOs da API
+    i18n/
+      messages.ts    — chaves PT/EN (t('key') ou t('key', { var }))
+      domain.ts      — labels de enums (status, prioridade…)
+
+DESIGN SYSTEM
+-------------
+  Usar SEMPRE tokens e componentes compartilhados:
+
+  | Necessidade        | Usar                          |
+  |--------------------|-------------------------------|
+  | Botão primário     | btnPrimaryClass               |
+  | Botão secundário   | btnGhostClass                 |
+  | Botão sucesso      | btnSuccessClass               |
+  | Input / select     | inputClass + FormField        |
+  | Formulário inline  | formRowClass                  |
+  | Lista              | DataTable + TableActions      |
+  | KPI                | StatCard                      |
+  | Carregando         | LoadingState                  |
+  | Lista vazia        | EmptyState                    |
+  | Título de seção    | SectionTitle                  |
+  | Chip / tag         | chipClass                     |
+
+  NÃO usar inline: bg-slate-*, text-indigo-*, bg-emerald-*
+
+FORMULÁRIOS (PADRÃO OBRIGATÓRIO)
+--------------------------------
+  1. Schema Zod em lib/schemas/<entidade>.ts
+  2. useForm({ resolver: zodResolver(schema) })
+  3. FormField para label + mensagem de erro
+  4. to*Payload() para normalizar antes do POST/PUT
+  5. getErrorMessage() no onError das mutations
+
+  Exemplo (SkillsPage — referência):
+
+    const form = useForm<SkillFormValues>({
+      resolver: zodResolver(skillFormSchema),
+      defaultValues: { name: '', category: '' },
+    })
+
+    const onSubmit = form.handleSubmit((values) => {
+      create.mutate(toSkillPayload(values))
+    })
+
+I18N
+----
+  Todas as strings visíveis ao usuário devem usar t('chave').
+  Interpolação: t('form.people.skillsOf', { name: person.name })
+  Labels de enum: useDomainLabels() (personStatus, projectStatus…)
+
+TENANT
+------
+  Header X-Tenant-Id obrigatório — configurado em SettingsContext.
+  Persistido em localStorage. Sem tenant válido, queries ficam disabled.
+
+TESTES
+------
+  Colocar ao lado do código:
+    lib/errors.test.ts
+    lib/schemas/skill.test.ts
+    components/LoadingState.test.tsx
+
+  Foco: schemas Zod, utilitários, componentes sem API.
+
+PÁGINAS — ESTADO (2026-06-17)
+-----------------------------
+  [x] Skills      — RHF + Zod + DataTable + i18n
+  [x] People      — RHF + Zod + DataTable + i18n
+  [x] Projects    — RHF + Zod + DataTable + i18n (cliente + projeto)
+  [x] AllocationNeeds — DataTable + design system + i18n
+  [x] Capacity    — StatCard + LoadingState + i18n KPIs
+  [x] Financials  — StatCard + LoadingState + i18n KPIs
+  [x] Dashboard   — StatCard (highlight warning)
+  [x] Allocations, Conflicts — já harmonizados (sprint anterior)
+  [x] Matching — i18n + MatchingCandidateCard
+  [x] Simulations — i18n + design system
+  [x] Financials — i18n seções internas
+  [x] Allocations — RHF + Zod
+
+PRÓXIMOS PASSOS
+---------------
+  - Acessibilidade avançada (aria em tabelas, focus trap no drawer)
+  - Testes E2E (Playwright) — fora do escopo atual
+  - RHF em Simulations (papéis dinâmicos — opcional)
+  - PWA (manifest + service worker) — futuro
+
+MOBILE
+------
+  Breakpoints: mobile < 640px, tablet < 1024px, desktop ≥ 1024px
+  Menu: MobileNav drawer (< lg); nav horizontal no header (≥ lg)
+  Tabelas: scroll horizontal via .ias-table-wrap
+  Formulários: formRowClass empilha em mobile
+  Guia completo: docs/MOBILE.txt
+  Sprint: docs/roadmap/09-FRONTEND-MOBILE.md
+
+REFERÊNCIAS I18N
+----------------
+  t('chave')   — mensagens gerais (messages.ts)
+  tp('chave')  — páginas Matching/Simulations/Financials/Alloc (pageMessages.ts)
+
+REFERÊNCIAS
+-----------
+  docs/roadmap/07-FRONTEND-UX.md   — design system e checklist UX
+  docs/roadmap/08-FRONTEND-QUALIDADE.md — sprint qualidade (esta entrega)
+  docs/DEPLOY-AZURE-DEMO.txt         — deploy demo Azure
+  docs/roadmap/09-FRONTEND-MOBILE.md — sprint mobile e touch
+  docs/MOBILE.txt                    — guia de compatibilidade mobile
+  Frontend/README.md               — comandos rápidos
+
+================================================================================

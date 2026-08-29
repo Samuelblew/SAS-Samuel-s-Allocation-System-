@@ -1,0 +1,181 @@
+================================================================================
+  IAS — GUIA DE DESENVOLVIMENTO (DEV + AGENTE IA)
+  Leia este arquivo ANTES de codar. Atualizado: 2026-06-03 (Camada 4 fechada)
+================================================================================
+
+MAPA DA DOCUMENTAÇÃO
+----------------------
+  REQUISITOS_PRODUTO.txt  → o quê construir (negócio)
+  ARQUITETURA.txt         → como construir (técnico)
+  FRONTEND.txt            → guia do frontend (stack, padrões, testes)
+  AMBIENTE.txt            → ferramentas no PC
+  adr/STACK.txt           → decisões de stack
+  Backend/README.md       → comandos, rotas API, migrations
+
+
+ESTADO ATUAL
+------------
+Fase .............. 0 (Fundação) — CONCLUÍDA (tenant, user, JWT mock, CI, health+DB)
+Camada 1 (backend)  CONCLUÍDA (+ RN-003, disponibilidade, staffing gaps)
+Camada 2 ........... CONCLUÍDA (overview, bench, skills, RN-004, future-gaps)
+Camada 3 ........... CONCLUÍDA (matching RN-007 + filtros + histórico + batch)
+Camada 4 ........... CONCLUÍDA (custo, margem, overview, bench, simulação, rentabilidade)
+IA (Camada 5) ..... PROIBIDA
+
+Backend: Backend/IAS.sln — Domain, Application, Infrastructure, Api + 3 projetos de teste
+Testes: dotnet test Backend/IAS.sln (66 testes)
+Migration ativa: AddMatchingSuggestions (após TenantsAndUsers)
+Migration ativa: 20260603190840_InitialCreate (schema Camada 1 completo)
+MySQL provider dev: Microting.EntityFrameworkCore.MySql 10.x (EF Core 10; ver Backend/README.md)
+
+
+CHECKLIST FASE 0
+----------------
+[x] Solution .NET 10 (IAS.sln, net10.0)
+[x] Projetos Domain, Application, Infrastructure, Api
+[x] MySQL 8 + banco ias_dev
+[x] EF Core 10 + migrations (InitialCreate)
+[x] Multi-tenant (tenant_id + global filter + header X-Tenant-Id)
+[x] Auth mock JWT (dev) — Bearer + fallback X-Tenant-Id
+[x] Swagger / OpenAPI
+[x] CI (build + test no pipeline) — .github/workflows/backend-ci.yml
+[x] Frontend scaffold (React 19 + Vite 6) — Frontend/
+[x] README.md
+
+
+CHECKLIST CAMADA 1 (BACKEND) — CONCLUÍDA
+----------------------------------------
+[x] 1. Skill
+[x] 2. Person + PersonSkill
+[x] 3. Unavailability
+[x] 4. Client + Project
+[x] 5. AllocationNeed
+[x] 6. Allocation (+ RN-001 superalocação na API)
+[x] 7. Views projeto↔pessoa (GET projects/{id}/people, people/{id}/projects)
+[x] 8. Conflitos (GET /allocations/conflicts — detecção RN-001, sem tabela AllocationConflict)
+[x] 9. Audit log (automático no SaveChanges + GET /audit-logs)
+
+Pendências aceitas no MVP (não bloqueiam Camada 1):
+- Entidades Tenant/User: API em /tenants e /users; tenant ainda pode ser GUID solto (legado dev)
+- Tabela allocation_conflicts: não persistida; conflitos calculados em tempo real
+
+
+PRÓXIMA TAREFA
+--------------
+1. Deploy demo Azure — ver docs/DEPLOY-AZURE-DEMO.txt
+2. Camada 4 opcional: receita por pessoa alocada
+3. Entra ID (pós-demo)
+
+Após pull com migration nova:
+  cd Backend/src/IAS.Api
+  dotnet ef database update --project ../IAS.Infrastructure
+
+Roadmap detalhado: docs/roadmap/
+
+
+DECISÕES (NÃO REVERTER SEM ADR)
+-------------------------------
+Monólito modular | .NET 10 | MySQL 8 | React 19
+Dev local SEM Docker | Multi-tenant shared schema | REST /api/v1/
+UUID PK | IA só Camada 5 | Scoring determinístico Camada 3
+Azure: Container Apps (API) + Static Web Apps (UI) + MySQL Flexible
+
+MySQL em dev: Microting.EntityFrameworkCore.MySql 10.x até Pomelo oficial EF Core 10.
+
+
+ORDEM DOS VERTICAL SLICES (CAMADA 1) — FEITO
+--------------------------------------------
+ 1. Skill
+ 2. Person + PersonSkill
+ 3. Unavailability
+ 4. Client + Project
+ 5. AllocationNeed
+ 6. Allocation (+ RN-001)
+ 7. Views projeto↔pessoa
+ 8. Conflitos + alertas
+ 9. Audit log
+
+Camadas 2–4 só após Camada 1 completa (backend OK; produto Camada 2+ pendente).
+
+
+API CAMADA 1 (RESUMO)
+---------------------
+Base: /api/v1/ | Header obrigatório: X-Tenant-Id (GUID)
+Header opcional: X-Actor-Id (audit log)
+Erros: RFC 7807 | Paginação: ?page=1&pageSize=20
+
+Recursos CRUD:
+  /skills, /people, /people/{id}/skills, /people/{id}/unavailabilities
+  /clients, /projects, /allocation-needs, /allocations
+  /tenants (POST bootstrap), /users
+
+Auth (dev):
+  POST /auth/dev-token  → Bearer JWT (tenant_id + sub)
+  Fallback: X-Tenant-Id + X-Actor-Id
+
+Leitura / regras:
+  GET /projects/{id}/people
+  GET /people/{id}/projects
+  GET /allocations/conflicts?personId=&projectId=&from=&to=
+  GET /audit-logs?entityType=&entityId=&action=&from=&to=
+  GET /capacity/overview?from=&to=
+  GET /capacity/bench?from=&to=
+  GET /capacity/projects-understaffed | GET /projects/understaffed
+  POST /simulations/project-feasibility
+  GET /capacity/people/{id}/availability?from=&to=
+  GET /capacity/projects/{id}/staffing-gaps
+  GET /capacity/people-available?from=&to=&minAvailablePercent=
+
+Health (sem tenant): GET /api/v1/health
+Swagger (Development): http://localhost:5203/swagger
+
+
+COMANDOS RÁPIDOS (BACKEND)
+--------------------------
+  cd Backend
+  dotnet build
+  dotnet test IAS.sln
+  cd src/IAS.Api && dotnet run
+
+MySQL (primeira vez ou após pull com migrations novas):
+  cd Backend
+  .\scripts\setup-dev-database.ps1
+  — ou: dotnet ef database update --project src/IAS.Infrastructure (em src/IAS.Api)
+
+User Secrets (IAS.Api):
+  ConnectionStrings:Default = Server=localhost;Port=3306;Database=ias_dev;...
+
+
+CONVENÇÕES
+----------
+Backend: IAS.{Layer}.{Module} | TenantEntity | MediatR | FluentValidation
+         DTOs na API, nunca entidade de domínio exposta
+Frontend: TanStack Query v5 | React Hook Form + Zod | Vitest | UI pt-BR/en
+Banco: snake_case plural | migrations EF | FK RESTRICT em allocation
+Commits: tipo(escopo): descrição  (feat, fix, refactor, test, docs, chore)
+
+
+CONNECTION STRING (DEV)
+-----------------------
+Usar User Secrets — NUNCA commitar senha.
+
+  Server=localhost;Port=3306;Database=ias_dev;User=root;Password=***;
+
+
+ANTI-PATTERNS
+-------------
+- IA/LLM nas camadas 1–4
+- Docker para banco local
+- Lógica de superalocação só no frontend
+- Pular Camada 1
+- Microserviços, MongoDB, GraphQL no MVP
+- Hardcode tenant_id
+
+
+DEFINITION OF DONE (SLICE)
+--------------------------
+Domain + Handler + Validator + Repository + Migration + Controller Swagger
++ teste domínio + teste integração API + isolamento tenant
+
+
+================================================================================

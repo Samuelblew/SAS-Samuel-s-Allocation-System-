@@ -1,0 +1,29 @@
+================================================================================
+  ADR — STACK E AMBIENTE DE DESENVOLVIMENTO
+  Status: ACEITO | 2026-06-02
+================================================================================
+
+CONTEXTO
+O requisito original (REQUISITOS_PRODUTO.txt) não define tecnologia.
+Escolhas para MVP em Windows, deploy futuro em Azure.
+
+DECISÕES
+--------
+  Backend .......... .NET 10 LTS + EF Core 10 + MySQL (Pomelo alvo; dev 2026-06: Microting 10.x)
+  Frontend ......... React 19 + Vite 6 + TypeScript 5.7+ + Node 22
+  Banco dev ........ MySQL 8 instalado no Windows (sem Docker)
+  Banco prod ....... Azure Database for MySQL Flexible Server
+  Arquitetura ...... Clean Architecture, monólito modular, multi-tenant
+  API .............. REST /api/v1/, OpenAPI
+  Deploy ........... Container Apps (API) + Static Web Apps (UI)
+  IA ............... Camada 5 apenas, após dados reais em produção
+
+REJEITADO
+---------
+  Docker local, PostgreSQL, MongoDB, microserviços, GraphQL, .NET 8/9
+
+CONSEQUÊNCIA
+------------
+  Repositório não usa docker-compose. Connection string via User Secrets.
+
+================================================================================

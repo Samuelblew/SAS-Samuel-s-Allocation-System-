@@ -1,0 +1,75 @@
+================================================================================
+  IAS — COMPATIBILIDADE MOBILE
+  Atualizado: 2026-06-20 (Sprint 09)
+================================================================================
+
+VISÃO GERAL
+-----------
+  O frontend IAS é uma SPA React responsiva. Em telas < 1024px a navegação
+  principal migra para um drawer (MobileNav); conteúdo, formulários e tabelas
+  adaptam-se via CSS em index.css e utilitários Tailwind (sm:, lg:).
+
+BREAKPOINTS
+-----------
+  < 640px   — mobile (formulários em coluna, header compacto)
+  < 1024px  — tablet (menu hamburger, subnav com scroll horizontal)
+  ≥ 1024px  — desktop (nav no header, layout completo)
+
+NAVEGAÇÃO
+---------
+  Layout.tsx
+    - Desktop (≥ 1024px): nav horizontal + LanguageSwitch + ThemeToggle + DevSettings
+    - Mobile/tablet (< 1024px): logo + ícones (tema, dev, menu) — nav oculta via CSS
+    - Drawer MobileNav: rotas + preferências (idioma/tema) no rodapé
+
+  IMPORTANTE: a visibilidade da nav NÃO usa Tailwind hidden/lg:flex — o CSS em
+  index.css controla display:none abaixo de 1024px (.ias-header-nav).
+
+  Chaves i18n: layout.menu, layout.navMobile, layout.preferences, common.close
+
+TABELAS
+-------
+  DataTable → .ias-table-wrap com overflow-x: auto
+  Em telas estreitas, deslize horizontalmente para ver todas as colunas.
+  Ações (editar/excluir) usam botões maiores em < 1024px.
+
+FORMULÁRIOS
+-----------
+  formRowClass (.ias-form-row) — linha no desktop, coluna no mobile
+  PeriodFilter — .ias-period-filter; datas em coluna no mobile
+  Evitar min-w fixo sem w-full sm:min-w-[…] em FormField
+
+SAFE AREA / VIEWPORT
+--------------------
+  index.html: viewport-fit=cover
+  .ias-shell: padding com env(safe-area-inset-*)
+  MobileNav: padding inferior com safe-area-inset-bottom
+
+COMPONENTES RELEVANTES
+----------------------
+  Frontend/src/components/MobileNav.tsx
+  Frontend/src/components/Layout.tsx
+  Frontend/src/components/PeriodFilter.tsx
+  Frontend/src/components/DataTable.tsx
+  Frontend/src/index.css  — seção "Mobile / touch"
+
+TESTAR LOCALMENTE
+-----------------
+  cd Frontend
+  npm run dev
+  Chrome DevTools → Toggle device toolbar (Ctrl+Shift+M)
+  Ou acesse http://<IP-da-máquina>:5173 no celular (mesma rede Wi‑Fi)
+
+PENDENTE (ROADMAP)
+------------------
+  - Acessibilidade avançada (aria em tabelas, focus trap no drawer)
+  - PWA (manifest, offline)
+  - E2E Playwright com viewports mobile
+
+REFERÊNCIAS
+-----------
+  docs/roadmap/09-FRONTEND-MOBILE.md  — sprint completa
+  docs/roadmap/ROADMAP.md             — visão geral
+  docs/FRONTEND.txt                   — guia do frontend
+
+================================================================================

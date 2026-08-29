@@ -1,0 +1,42 @@
+================================================================================
+  IAS — AMBIENTE DE DESENVOLVIMENTO
+  Atualizado: 2026-06-02
+================================================================================
+
+OBRIGATÓRIO (FASE 0)          | VERSÃO    | STATUS NESTE PC (2026-06-02)
+------------------------------|-----------|---------------------------
+.NET SDK                      | 10.x      | OK — 10.0.300
+Node.js                       | 22 LTS    | OK — v22.22.0
+Git                           | 2.40+     | OK — 2.53.0
+MySQL Server                  | 8.0+      | OK — 8.0.46, MySQL80 Running
+Editor (VS Code / Cursor)     | recente   | OK
+
+OPCIONAL                      |           |
+GitHub CLI (gh)               | 2.x       | Falta
+MySQL no PATH                 |           | Parcial — usar:
+                              |           | C:\Program Files\MySQL\MySQL Server 8.0\bin\
+
+MYSQL
+-----
+  Banco: ias_dev (utf8mb4_unicode_ci)
+  Porta: 3306
+  Connection string (User Secrets, não commitar):
+    Server=localhost;Port=3306;Database=ias_dev;User=root;Password=***;
+
+NÃO É NECESSÁRIO
+-----------------
+  Docker Desktop, docker-compose, WSL, Redis (Fase 0)
+
+INSTALAR MYSQL (SE PRECISAR)
+----------------------------
+  https://dev.mysql.com/downloads/installer/
+  CREATE DATABASE ias_dev CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+VERIFICAR AMBIENTE (POWERSHELL)
+-------------------------------
+  dotnet --list-sdks
+  node --version
+  Get-Service MySQL*
+  & "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe" -u root -p -e "SHOW DATABASES LIKE 'ias_dev';"
+
+================================================================================

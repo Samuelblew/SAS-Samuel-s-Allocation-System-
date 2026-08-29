@@ -1,0 +1,203 @@
+================================================================================
+  IAS — TUTORIAL DE USO (rápido)
+  Atualizado: 2026-06-10
+================================================================================
+
+
+1. SUBIR O SISTEMA
+------------------
+
+  Terminal 1 (API):
+    cd Backend\src\IAS.Api
+    dotnet run --launch-profile http
+    → http://localhost:5203
+
+  Terminal 2 (tela):
+    cd Frontend
+    npm run dev
+    → http://localhost:5173
+
+  Teste: abra http://localhost:5203/api/v1/health
+    Deve aparecer: "status":"healthy","database":"connected"
+
+
+2. PRIMEIRO ACESSO — TENANT
+---------------------------
+
+  O tenant = sua consultoria. Sem ele, nada carrega.
+
+  a) Abra http://localhost:5203/swagger
+  b) POST /api/v1/tenants  →  body: { "name": "Minha Consultoria" }
+  c) Copie o "id" (GUID) da resposta
+  d) No frontend (topo da página), cole em "Tenant (X-Tenant-Id)"
+  e) A mensagem amarela some → pronto
+
+  O GUID fica salvo no navegador. Na próxima vez já vem preenchido.
+
+
+3. ORDEM DE CADASTRO (FAÇA NESTA SEQUÊNCIA)
+-------------------------------------------
+
+  ① Skills          → menu Skills
+  ② Pessoas         → menu Pessoas (nome, cargo, custo se quiser financeiro)
+  ③ Projetos        → menu Projetos (precisa de cliente; crie no Swagger se não tiver)
+  ④ Necessidades    → menu Necessidades (papéis que o projeto PRECISA)
+  ⑤ Alocações       → menu Alocações (quem ESTÁ no projeto de fato)
+
+  Dica: necessidade = demanda; alocação = realidade.
+
+
+4. MENU — O QUE CADA TELA FAZ
+------------------------------
+
+  Painel         → resumo: pessoas, projetos, conflitos, alertas de margem
+  Skills         → cadastrar competências (Java, React…)
+  Pessoas        → cadastrar profissionais
+  Projetos       → cadastrar projetos por cliente
+  Necessidades   → registrar papéis faltando em projetos (criar / editar / excluir)
+  Alocações      → colocar pessoa X no projeto Y com % e datas
+  Simulação      → "e se fecharmos um projeto novo?" (não grava nada)
+  Capacidade     → bench, gaps, projetos sem equipe, ocupação por skill
+  Matching       → quem é o melhor candidato para uma necessidade
+  Financeiro     → margem, custo, bench em R$, rentabilidade por cliente
+  Conflitos      → quem está superalocado
+
+
+5. FLUXO TÍPICO DO DIA A DIA
+----------------------------
+
+  CENÁRIO A — Novo projeto começando
+    1. Cadastre o projeto (Projetos)
+    2. Cadastre as necessidades (ex.: 1 Backend 50%, 1 QA 30%)
+    3. Vá em Matching → escolha a necessidade → veja candidatos
+    4. Aceite o candidato (histórico) ou vá em Alocações e aloque manualmente
+
+  CENÁRIO B — Comercial quer saber se pode vender
+    1. Vá em Simulação
+    2. Informe data de início, duração e papéis (qtd + dedicação)
+    3. Veja se dá na data ou qual a data mais cedo possível
+
+  CENÁRIO C — Financeiro antes de confirmar alocação
+    1. Vá em Financeiro
+    2. Role até "Simular margem antes de alocar"
+    3. Escolha projeto + pessoa + dedicação + período → Simular
+    4. Compare margem atual vs projetada
+
+  CENÁRIO D — Operações checando riscos
+    1. Capacidade → gaps futuros + bench + subalocados
+    2. Conflitos → superalocações
+    3. Painel → KPIs gerais
+
+
+6. SIMULAÇÃO — PASSO A PASSO
+----------------------------
+
+  SIMULAÇÃO COMERCIAL (menu Simulação)
+  ------------------------------------
+    Pergunta: "Tenho gente para este projeto na data X?"
+
+    1. Data desejada de início
+    2. Duração em meses (ex.: 3)
+    3. Adicione papéis (+ Papel):
+         - Papel: Backend
+         - Senioridade: Senior (opcional)
+         - Dedicação %: 50
+         - Quantidade: 2
+    4. Clique Simular
+
+    Resultado:
+      • Viável na data? sim/não
+      • Data mais cedo alternativa (se não der)
+      • Por papel: quantos candidatos vs quantos precisa
+
+    NÃO salva projeto nem alocação. Só calcula.
+
+  SIMULAÇÃO DE MARGEM (menu Financeiro, final da página)
+  ------------------------------------------------------
+    Pergunta: "Esta alocação piora a margem do projeto?"
+
+    1. Escolha projeto e pessoa
+    2. Papel, dedicação %, datas início/fim
+    3. Clique Simular
+
+    Resultado: margem atual, margem projetada, custo adicional.
+
+    NÃO cria alocação. Para alocar de verdade, use menu Alocações.
+
+
+7. MATCHING — PASSO A PASSO
+---------------------------
+
+  Por necessidade:
+    1. Matching → aba "Por necessidade"
+    2. Selecione uma necessidade aberta
+    3. (Opcional) Filtros: disp. mínima %, excluir quem já está no projeto
+    4. Veja ranking com score e breakdown
+    5. Aceitar / Rejeitar → grava histórico (não aloca automaticamente)
+
+  Batch por projeto:
+    1. Aba "Batch por projeto"
+    2. Selecione o projeto
+    3. Veja top candidatos para cada necessidade aberta de uma vez
+
+
+8. CRIAR CLIENTE (SE PROJETOS PEDIR)
+------------------------------------
+
+  O frontend de Projetos exige cliente. Pelo Swagger:
+
+    POST /api/v1/clients
+    Header: X-Tenant-Id: <seu-guid>
+    Body: { "name": "Cliente ACME" }
+
+  Depois cadastre o projeto normalmente na tela.
+
+
+9. VER DADOS NO MYSQL
+---------------------
+
+  MySQL Workbench → Schemas → ias_dev
+
+  SELECT * FROM tenants;
+  SELECT name, seniority, hourly_cost FROM people WHERE deleted_at IS NULL;
+  SELECT name, status FROM projects WHERE deleted_at IS NULL;
+  SELECT * FROM allocations WHERE deleted_at IS NULL;
+
+  Filtre por tenant_id = '<seu-guid>' para bater com o frontend.
+
+
+10. PROBLEMAS COMUNS
+--------------------
+
+  "Informe um GUID de tenant válido"
+    → Cole um GUID real do POST /tenants (não use o placeholder da tela)
+
+  Tela vazia / erro na API
+    → Backend rodando? Health OK? Tenant correto?
+
+  Financeiro sem margem
+    → Projeto precisa de estimatedRevenue ou budget
+    → Pessoas precisam de hourlyCost ou monthlyCost
+
+  Matching sem candidatos
+    → Cadastre pessoas com disponibilidade no período da necessidade
+    → Verifique se não estão 100% alocadas
+
+  Simulação diz "não viável"
+    → Normal se o time está cheio; veja earliestFeasibleStart
+
+
+11. ATALHOS ÚTEIS
+-----------------
+
+  Frontend:  http://localhost:5173
+  Swagger:   http://localhost:5203/swagger
+  Health:    http://localhost:5203/api/v1/health
+
+  Docs longa (apresentação): docs/APRESENTACAO.txt
+  Docs técnica:              docs/DESENVOLVIMENTO.txt
+
+
+================================================================================
+  FIM — qualquer dúvida, comece pelo tenant e siga a ordem ①→⑤ do item 3.
+================================================================================

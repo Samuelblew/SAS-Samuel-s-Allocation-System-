@@ -1,0 +1,458 @@
+================================================================================
+  IAS — INTELLIGENT ALLOCATION SYSTEM
+  Guia de apresentação (demo + explicação funcional)
+  Atualizado: 2026-06-10
+================================================================================
+
+Este arquivo serve para apresentar o sistema amanhã: o que é, como funciona,
+cada tela, o conceito de Tenant e como as simulações operam.
+
+
+================================================================================
+1. O QUE É O IAS
+================================================================================
+
+O IAS (Intelligent Allocation System) é uma plataforma para CONSULTORIAS
+gerenciarem alocação de pessoas em projetos com visão operacional, previsão
+de capacidade e apoio à decisão comercial e financeira.
+
+Não é apenas uma "agenda de quem está onde". O valor está em responder:
+
+  • Quem está alocado em quê?
+  • Quem ficará disponível nas próximas semanas?
+  • Dá para fechar/vender mais um projeto?
+  • Quem combina melhor com uma demanda?
+  • Alguém está superalocado?
+  • Quais projetos estão sem equipe?
+  • Qual será a ociosidade (bench) futura?
+  • Qual é a margem por projeto?
+  • Vale a pena alocar esta pessoa neste projeto (impacto financeiro)?
+
+STACK (resumo para a audiência técnica):
+  • Backend: .NET 10, API REST, arquitetura em camadas (Domain / Application /
+    Infrastructure / Api)
+  • Banco: MySQL 8 (banco local ias_dev em desenvolvimento)
+  • Frontend: React 19 + Vite + TypeScript
+  • Multi-tenant: várias consultorias no mesmo sistema, dados isolados
+  • Simulações e matching: determinísticos (regras de negócio), SEM IA por enquanto
+
+
+================================================================================
+2. COMO A APLICAÇÃO FUNCIONA (VISÃO GERAL)
+================================================================================
+
+FLUXO DE DADOS
+--------------
+
+  [Navegador]  →  Frontend (localhost:5173)
+                      ↓ proxy /api
+                 Backend API (localhost:5203)
+                      ↓ EF Core + filtros tenant
+                 MySQL (ias_dev)
+
+O frontend chama a API. A API valida o tenant, aplica regras de negócio,
+consulta ou grava no MySQL e devolve JSON. O frontend exibe em telas.
+
+MODELO MENTAL (4 camadas de maturidade já implementadas):
+
+  Camada 1 — Operacional
+    Cadastros + alocações + conflitos. "Quem está onde?"
+
+  Camada 2 — Capacidade
+    Bench, disponibilidade, gaps, simulação de viabilidade de projeto.
+    "Tenho gente para vender mais?"
+
+  Camada 3 — Matching
+    Ranking de candidatos para uma necessidade, com score explicado.
+    "Quem é o melhor fit para este papel?"
+
+  Camada 4 — Financeiro
+    Custo, margem, bench em R$, rentabilidade por cliente/tipo,
+    simulação de margem antes de alocar.
+    "O projeto ainda é rentável?"
+
+
+ORDEM TÍPICA DE USO (cadastro → decisão)
+----------------------------------------
+
+  1. Criar tenant (consultoria) — uma vez
+  2. Cadastrar Skills
+  3. Cadastrar Pessoas (+ skills e custo)
+  4. Cadastrar Clientes e Projetos
+  5. Registrar Necessidades de alocação (papéis que o projeto precisa)
+  6. Registrar Alocações (quem de fato está no projeto)
+  7. Usar Capacidade, Matching, Simulações e Financeiro para decidir
+
+
+================================================================================
+3. TENANT (X-Tenant-Id) — EXPLICAÇÃO PARA A APRESENTAÇÃO
+================================================================================
+
+O QUE É
+-------
+
+  "Tenant" = uma CONSULTORIA (organização cliente do sistema).
+
+  O IAS é multi-tenant: o mesmo software e o mesmo banco servem várias
+  consultorias, mas os dados de cada uma ficam SEPARADOS.
+
+  Cada registro (pessoa, projeto, alocação…) tem uma coluna tenant_id no MySQL.
+
+POR QUE APARECE NO TOPO DA TELA
+-------------------------------
+
+  Em produção, o tenant viria do login (JWT com tenant_id do usuário).
+
+  Em desenvolvimento/demo, ainda não há tela de login completa. Por isso o
+  campo "Tenant (X-Tenant-Id)" no header do frontend:
+
+    • Você cola o GUID da sua consultoria
+    • O frontend envia esse valor em TODA requisição como header HTTP:
+      X-Tenant-Id: <seu-guid>
+    • A API só mostra/grava dados daquele tenant
+
+  Sem GUID válido, o frontend nem chama a API (mensagem amarela de aviso).
+
+COMO OBTER O GUID (PRIMEIRA VEZ)
+--------------------------------
+
+  Opção A — Swagger (http://localhost:5203/swagger):
+    POST /api/v1/tenants
+    Body: { "name": "Minha Consultoria" }
+    Copiar o "id" da resposta.
+
+  Opção B — MySQL Workbench:
+    SELECT id, name FROM tenants;
+
+  Colar o id no campo Tenant do frontend. O valor fica salvo no navegador
+  (localStorage) para as próximas sessões.
+
+CAMPO "ATOR (X-Actor-Id)" — OPCIONAL
+------------------------------------
+
+  Identifica quem fez a ação (audit log). Pode ficar vazio na demo.
+
+O QUE DIZER NA APRESENTAÇÃO (frase pronta)
+------------------------------------------
+
+  "Cada consultoria é um tenant isolado. O GUID no topo simula o login:
+   garante que só vemos os dados da nossa empresa. No Azure, isso viria
+   automaticamente do token de autenticação."
+
+
+================================================================================
+4. MENU DO FRONTEND — CADA FUNCIONALIDADE
+================================================================================
+
+PAINEL (/)
+----------
+  Visão geral do tenant: contagem de pessoas, projetos, alocações, conflitos,
+  projetos subalocados e alertas de margem baixa. Atalhos para as outras áreas.
+  Também mostra se a API está online (health check).
+
+SKILLS (/skills)
+----------------
+  Cadastro de competências técnicas (ex.: Java, React, AWS).
+  Usadas em necessidades de alocação e no score de matching.
+
+PESSOAS (/people)
+-----------------
+  Cadastro de profissionais: nome, cargo, senioridade, custo (hora ou mensal),
+  carga semanal, time, status (ativo, férias, terceiro…).
+  Skills são vinculadas via API (pessoa + skill).
+  Indisponibilidades (férias etc.) existem na API; UI dedicada ainda não.
+
+PROJETOS (/projects)
+--------------------
+  Projetos por cliente: status (proposta, em execução…), datas, prioridade,
+  budget, receita estimada, tipo de projeto, responsáveis comercial/delivery.
+
+NECESSIDADES (/allocation-needs)
+--------------------------------
+  Demandas de staffing POR PROJETO: qual papel falta, senioridade, skills,
+  % dedicação, período, urgência e criticidade.
+  Alimenta: matching, gaps de equipe, projetos subalocados.
+  Permite criar, editar e excluir necessidades.
+
+ALOCAÇÕES (/allocations)
+------------------------
+  Registro de quem está em qual projeto, com qual papel, % dedicação e datas.
+  É a fonte da verdade operacional. Dispara regras de superalocação (RN-001)
+  e atualização automática do status das necessidades (RN-003).
+
+SIMULAÇÃO (/simulations)
+------------------------
+  Simulação COMERCIAL de viabilidade de um NOVO projeto (ver seção 5.1).
+  Não grava nada no banco — só calcula com base nas pessoas e alocações atuais.
+
+CAPACIDADE (/capacity)
+----------------------
+  Camada 2 agregada:
+    • Overview semanal (ocupação média, bench, superalocados, horas)
+    • Ocupação por skill
+    • Pessoas em bench (disponíveis ≥ 50%)
+    • Projetos subalocados (equipe incompleta)
+    • Gaps futuros de capacidade (demanda vs oferta no tenant)
+  Filtro por período (from / to).
+
+MATCHING (/matching)
+--------------------
+  Camada 3 — duas visões:
+
+  A) Por necessidade
+     Escolhe uma necessidade aberta → lista candidatos ranqueados com score
+     e breakdown (disponibilidade, skills, senioridade, histórico, custo,
+     penalidades). Botões Aceitar/Rejeitar gravam histórico de decisão.
+     Filtros: disponibilidade mínima %, excluir quem já está no projeto.
+
+  B) Batch por projeto
+     Escolhe um projeto → mostra top candidatos para CADA necessidade aberta
+     de uma vez (montar squad).
+
+FINANCEIRO (/financials)
+------------------------
+  Camada 4:
+    • Overview: receita, custo, margem total, alertas de margem baixa
+    • Tabela por projeto
+    • Rentabilidade agregada por CLIENTE ou por TIPO de projeto
+    • Custo de bench (capacidade ociosa em R$)
+    • Simulação de margem antes de alocar (ver seção 5.2)
+    • Detalhe por projeto: custo por alocação e margem
+
+CONFLITOS (/conflicts)
+----------------------
+  Lista superalocações detectadas (RN-001): mesma pessoa com soma de dedicação
+  acima do permitido no período. Calculado em tempo real, sem tabela extra.
+
+
+================================================================================
+5. SIMULAÇÕES — COMO FUNCIONAM (DETALHE PARA A APRESENTAÇÃO)
+================================================================================
+
+IMPORTANTE: As simulações do IAS são DETERMINÍSTICAS.
+  Usam regras fixas sobre pessoas, alocações, disponibilidade e custos.
+  NÃO usam inteligência artificial (Camada 5 é futura).
+
+
+5.1 SIMULAÇÃO COMERCIAL — VIABILIDADE DE PROJETO
+------------------------------------------------
+
+  Onde: Frontend → Simulação (/simulations)
+  API:   POST /api/v1/simulations/project-feasibility
+
+  PERGUNTA QUE RESPONDE:
+    "Se fecharmos um projeto com X papéis por Y meses, conseguimos começar
+     na data desejada? Se não, qual a data mais cedo possível?"
+
+  ENTRADA (o que você preenche na tela):
+    • Data desejada de início
+    • Duração em meses
+    • Lista de papéis simulados, cada um com:
+        - papel (ex.: Backend)
+        - senioridade esperada (opcional)
+        - % dedicação
+        - quantidade de pessoas (ex.: 2 backends)
+
+  O QUE O SISTEMA FAZ (por baixo dos panos):
+    1. Carrega todas as pessoas ativas, alocações e indisponibilidades do tenant
+    2. Para a data de início desejada, verifica se há candidatos suficientes
+       para cada papel (disponibilidade no período, sem superalocação)
+    3. Se NÃO for viável na data desejada, avança semana a semana (até 26
+       semanas) até achar a primeira data em que todos os papéis podem ser
+       atendidos
+
+  SAÍDA (o que você mostra na demo):
+    • feasibleAtDesiredStart: true/false — dá para começar na data pedida?
+    • earliestFeasibleStart: primeira data alternativa (se não der na desejada)
+    • Por papel: quantos candidatos existem vs quantidade necessária
+
+  NÃO GRAVA no banco. É cenário "e se fecharmos este contrato?".
+
+  EXEMPLO PARA FALAR:
+    "Quero 2 Backend Senior 50% e 1 Frontend Pleno 50% por 3 meses a partir
+     de 15/07. O sistema diz: na data pedida só temos 1 backend disponível;
+     a partir de 29/07 temos equipe suficiente."
+
+
+5.2 SIMULAÇÃO FINANCEIRA — MARGEM ANTES DE ALOCAR
+-------------------------------------------------
+
+  Onde: Frontend → Financeiro (/financials) — formulário no final da página
+  API:   POST /api/v1/simulations/allocation-margin
+
+  PERGUNTA QUE RESPONDE:
+    "Se eu alocar esta pessoa neste projeto com esta dedicação, como fica
+     a margem do projeto?"
+
+  ENTRADA:
+    • Projeto
+    • Pessoa
+    • Papel e % dedicação
+    • Período (início/fim)
+    • Limiar de alerta de margem (ex.: 15%)
+
+  O QUE O SISTEMA FAZ:
+    1. Calcula custo atual do projeto no período (soma das alocações existentes)
+    2. Calcula margem atual: receita estimada (ou budget) − custo
+    3. Simula uma alocação EXTRA (sem salvar) para a pessoa escolhida
+    4. Recalcula custo e margem projetados
+    5. Mostra delta (quanto a margem cai ou sobe) e se dispara alerta de
+       margem baixa
+
+  CUSTO POR PESSOA (RN-005):
+    horas_semana = carga_semanal × (dedicação% / 100)
+    custo = horas × custo_hora (ou custo_mensal / 160)
+
+  NÃO GRAVA alocação. É decisão "antes de confirmar".
+
+  EXEMPLO PARA FALAR:
+    "Projeto com margem de 32%. Se alocar o dev sênior a 50% por 3 meses,
+     a margem projetada cai para 18% — ainda acima do alerta de 15%."
+
+
+5.3 OUTRAS "SIMULAÇÕES" (NÃO SÃO IA)
+------------------------------------
+
+  Matching e batch por projeto também são cálculos determinísticos: ranking
+  por score RN-007, não gravação automática de alocação.
+
+
+================================================================================
+6. MATCHING — SCORE RN-007 (RESUMO PARA DEMO)
+================================================================================
+
+Para cada necessidade aberta, o sistema pontua cada pessoa ativa:
+
+  Fator                    Peso máx.   O que mede
+  -----------------------  ---------   ----------------------------------
+  Disponibilidade          25          % livre no período vs dedicação pedida
+  Skills obrigatórias      25          % das skills requeridas que a pessoa tem
+  Skills desejáveis        10          idem para desejáveis
+  Senioridade              15          match com senioridade esperada
+  Histórico                10          mesmo papel / tipo de projeto antes
+  Custo                    10          menor custo = melhor (normalizado)
+  Penalidade superaloc.   −20          já passa de 100% ou capacidade semanal
+  Penalidade troca proj.  −10          muitos projetos distintos em 12 meses
+
+  Total = soma positiva − penalidades (mínimo 0).
+
+  O candidato #1 é o maior score. A tela mostra o breakdown para TRANSPARÊNCIA
+  ("por que esta pessoa foi sugerida?").
+
+  Histórico: botões Aceitar/Rejeitar gravam decisão em matching_suggestions
+  (auditoria de quem o gestor escolheu ou descartou).
+
+
+================================================================================
+7. FINANCEIRO — REGRAS PRINCIPAIS
+================================================================================
+
+  RN-005 — Custo de alocação
+    Custo proporcional à dedicação e ao período, usando custo/hora da pessoa.
+
+  RN-006 — Margem de projeto
+    margem = receita_estimada (ou budget) − custo_total_alocações
+    alerta se margem% < limiar (padrão 15%)
+
+  Custo de bench
+    Capacidade ociosa (pessoas com ≥50% disponível) convertida em horas × custo.
+
+  Rentabilidade agregada
+    Soma receita/custo/margem por CLIENTE ou por TIPO de projeto.
+
+
+================================================================================
+8. REGRAS DE NEGÓCIO DESTACADAS
+================================================================================
+
+  RN-001 — Superalocação
+    Soma de dedicação da pessoa em alocações ativas não pode exceder limites.
+    Aparece em /conflicts e penaliza score no matching.
+
+  RN-003 — Status da necessidade
+    Ao criar/editar/remover alocação, o status da necessidade (Open /
+    PartiallyFilled / Filled) atualiza conforme cobertura do papel.
+
+  RN-004 — Capacidade efetiva
+    Horas reais consideram dedicação e indisponibilidades no período.
+
+
+================================================================================
+9. ROTEIRO SUGERIDO PARA A DEMO (15–20 MIN)
+================================================================================
+
+  1. (2 min) Contexto: problema das consultorias + visão do IAS (4 camadas)
+  2. (1 min) Mostrar Tenant no header — "cada consultoria isolada"
+  3. (3 min) Cadastro rápido ou dados já existentes:
+       Skills → Pessoa → Projeto → Necessidade → Alocação
+  4. (3 min) Capacidade: bench, gaps futuros, projeto subalocado
+  5. (3 min) Matching: ranking com breakdown + aceitar candidato
+  6. (3 min) Simulação comercial: novo projeto com 2–3 papéis
+  7. (3 min) Financeiro: margem do projeto + simular alocação + bench
+  8. (1 min) Conflitos se houver superalocação
+  9. (1 min) Fechar: dados no MySQL, 66 testes, roadmap (cloud / IA futura)
+
+  DICA: Tenha o GUID do tenant copiado antes. Abra Painel primeiro para
+  mostrar KPIs. Se a API não responder, verificar backend :5203 e health.
+
+
+================================================================================
+10. COMO SUBIR O SISTEMA (DIA DA APRESENTAÇÃO)
+================================================================================
+
+  Terminal 1 — Backend:
+    cd Backend\src\IAS.Api
+    dotnet run --launch-profile http
+    → http://localhost:5203  (Swagger: /swagger)
+
+  Terminal 2 — Frontend:
+    cd Frontend
+    npm run dev
+    → http://localhost:5173
+
+  Verificar: http://localhost:5203/api/v1/health
+    Deve retornar: status healthy, database connected
+
+
+================================================================================
+11. VER DADOS NO MYSQL (WORKBENCH)
+================================================================================
+
+  1. Conectar em Local instance MySQL80
+  2. Aba Schemas → banco ias_dev
+  3. Tabelas principais:
+       tenants          — consultorias
+       people           — profissionais
+       projects         — projetos
+       allocation_needs — necessidades
+       allocations      — alocações
+       matching_suggestions — histórico aceite/rejeição
+
+  Exemplo — ver pessoas do seu tenant:
+    SELECT id, name, seniority, hourly_cost, tenant_id
+    FROM people
+    WHERE deleted_at IS NULL;
+
+  Exemplo — ver tenants:
+    SELECT id, name, created_at FROM tenants;
+
+  Sempre filtrar por tenant_id se quiser bater com o que vê no frontend.
+
+
+================================================================================
+12. O QUE AINDA NÃO ESTÁ (SE PERGUNTAREM)
+================================================================================
+
+  • IA / chat / assistente (Camada 5 — propositalmente futura)
+  • Login visual (Entra ID) — hoje tenant manual no header
+  • UI de indisponibilidades e calendário (API existe)
+  • Receita por pessoa alocada (granular)
+  • Deploy Azure (Dockerfile + bicep no roadmap)
+  • Sugestão automática de "alocação alternativa" (segundo melhor cenário)
+
+  O MVP das Camadas 1–4 está funcional para demo de consultoria real.
+
+
+================================================================================
+FIM — Boa apresentação!
+================================================================================

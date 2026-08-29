@@ -1,0 +1,250 @@
+================================================================================
+  IAS — REQUISITOS DE PRODUTO (TEXTO ORIGINAL)
+  Não editar sem necessidade | Registro: 2026-06-02
+================================================================================
+
+Este arquivo é a fonte do NEGÓCIO. Stack e implementação: docs/ARQUITETURA.txt
+Cloud futura: Microsoft Azure.
+
+
+================================================================================
+1. PROBLEMA CENTRAL
+================================================================================
+
+Consultorias normalmente têm dificuldade em responder, com precisão, perguntas como:
+
+• Quem está alocado em quê?
+• Quem ficará disponível nas próximas semanas?
+• Tenho capacidade para vender mais um projeto?
+• Qual profissional combina melhor com este projeto?
+• Estou superalocando alguém?
+• Quais projetos estão com risco por falta de gente?
+• Qual será minha ociosidade futura?
+• Qual será minha margem por projeto considerando custo das pessoas?
+• Preciso contratar, terceirizar ou realocar?
+
+O produto não deve ser apenas uma "agenda de pessoas". O valor real está em
+transformar alocação em visibilidade operacional, previsão de capacidade e
+apoio à decisão comercial.
+
+
+================================================================================
+2. VISÃO DO PRODUTO
+================================================================================
+
+Uma plataforma para consultorias acompanharem:
+
+DEMANDA
+  Projetos, propostas, squads, papéis necessários, senioridade, skills, datas,
+  carga esperada e prioridade.
+
+OFERTA
+  Pessoas disponíveis, skills, senioridade, custo, perfil, restrições, férias,
+  carga máxima e histórico de projetos.
+
+ALOCAÇÃO
+  Quem está em cada projeto, por quanto tempo, com qual percentual, em qual
+  papel e com qual risco.
+
+PREVISÃO
+  Capacidade futura, gaps de pessoas, risco de ociosidade, conflito de agenda
+  e necessidade de contratação.
+
+OTIMIZAÇÃO
+  Sugestões de alocação com base em disponibilidade, skills, senioridade,
+  custo, margem e contexto do projeto.
+
+
+================================================================================
+3. PERSONAS PRINCIPAIS
+================================================================================
+
+GESTOR DE OPERAÇÕES / DELIVERY MANAGER
+  Precisa enxergar capacidade, conflitos, riscos e disponibilidade futura.
+
+GESTOR COMERCIAL
+  Precisa saber se pode vender um novo projeto, quando pode iniciar e quais
+  perfis estão disponíveis.
+
+TECH LEAD / MANAGER
+  Precisa montar squads equilibrados, respeitando skills, senioridade e
+  contexto técnico.
+
+RH / PEOPLE
+  Precisa prever necessidade de contratação, gaps de skill, férias,
+  movimentações e ociosidade.
+
+FINANCEIRO / DIRETORIA
+  Precisa entender margem, custo de alocação, rentabilidade por projeto e
+  utilização geral.
+
+
+================================================================================
+4. ENTIDADES PRINCIPAIS DO SISTEMA
+================================================================================
+
+Um bom MVP depende de um modelo de dados correto. Eu começaria com estas
+entidades:
+
+PESSOA
+  • Nome
+  • Cargo
+  • Senioridade
+  • Skills técnicas
+  • Custo/hora ou custo mensal
+  • Carga semanal disponível
+  • Calendário de indisponibilidade
+  • Preferências ou restrições
+  • Localidade/time
+  • Status: ativo, férias, aviso prévio, desligado, terceiro etc.
+
+PROJETO
+  • Cliente
+  • Nome do projeto
+  • Status: proposta, aprovado, em execução, pausado, encerrado
+  • Data de início/fim
+  • Prioridade
+  • Budget
+  • Receita estimada
+  • Tipo de projeto
+  • Responsável comercial
+  • Responsável delivery
+
+NECESSIDADE DE ALOCAÇÃO
+  • Projeto
+  • Papel necessário: backend, frontend, QA, dados, UX, arquiteto etc.
+  • Senioridade esperada
+  • Skills obrigatórias
+  • Skills desejáveis
+  • Percentual de dedicação
+  • Período
+  • Urgência
+  • Criticidade
+
+ALOCAÇÃO
+  • Pessoa
+  • Projeto
+  • Papel
+  • Percentual de dedicação
+  • Data início/fim
+  • Status: planejada, confirmada, em risco, encerrada
+  • Observações
+
+SKILL
+  • Nome
+  • Categoria
+  • Nível da pessoa naquela skill
+  • Última experiência
+  • Evidências opcionais: projetos anteriores, certificações, avaliação interna
+
+
+================================================================================
+5. FUNCIONALIDADES POR MATURIDADE
+================================================================================
+
+--------------------------------------------------------------------------------
+CAMADA 1 — CONTROLE OPERACIONAL BÁSICO
+--------------------------------------------------------------------------------
+
+Essa é a base do produto.
+
+• Cadastro de pessoas
+• Cadastro de projetos
+• Cadastro de skills
+• Cadastro de necessidades por projeto
+• Registro de alocações
+• Visualização de pessoas por projeto
+• Visualização de projetos por pessoa
+• Controle de percentual de alocação
+• Alertas simples de superalocação
+• Calendário de disponibilidade
+
+Essa camada resolve o problema mais comum: a empresa não sabe, com confiança,
+quem está onde.
+
+
+--------------------------------------------------------------------------------
+CAMADA 2 — PLANEJAMENTO DE CAPACIDADE
+--------------------------------------------------------------------------------
+
+Aqui o produto começa a gerar valor gerencial.
+
+• Visão de capacidade semanal/mensal
+• Pessoas disponíveis por período
+• Bench futuro
+• Ocupação por pessoa
+• Ocupação por squad
+• Ocupação por skill
+• Gaps futuros de capacidade
+• Projetos sem equipe completa
+• Mapa de conflitos
+• Simulação de entrada de novo projeto
+
+Exemplo de pergunta que o sistema deveria responder:
+"Se fecharmos um projeto com 2 backend seniors, 1 frontend pleno e 1 QA por
+3 meses, conseguimos começar em 15 dias?"
+
+
+--------------------------------------------------------------------------------
+CAMADA 3 — MATCHING ENTRE PESSOAS E PROJETOS
+--------------------------------------------------------------------------------
+
+Aqui entra inteligência de decisão.
+
+• Ranking de profissionais compatíveis com uma demanda
+• Score por disponibilidade
+• Score por skills obrigatórias
+• Score por senioridade
+• Score por histórico em projetos similares
+• Score por custo/margem
+• Penalidade por superalocação
+• Penalidade por troca frequente de projeto
+• Sugestão de alocação alternativa
+
+Exemplo:
+Para o papel "Backend Senior Java + AWS", o sistema sugere 5 pessoas,
+explicando por que cada uma foi ranqueada.
+
+
+--------------------------------------------------------------------------------
+CAMADA 4 — GESTÃO FINANCEIRA DA ALOCAÇÃO
+--------------------------------------------------------------------------------
+
+Muito importante para consultorias.
+
+• Custo estimado por projeto
+• Margem estimada por projeto
+• Receita por pessoa alocada
+• Custo de bench
+• Rentabilidade por cliente
+• Rentabilidade por tipo de projeto
+• Simulação de margem antes de confirmar uma alocação
+• Alertas de projeto com margem baixa
+
+Essa camada transforma o produto de ferramenta operacional em ferramenta de
+gestão.
+
+
+--------------------------------------------------------------------------------
+CAMADA 5 — IA E AUTOMAÇÃO (PARA O FUTURO — NÃO CONSIDERAR NESSE MOMENTO)
+--------------------------------------------------------------------------------
+
+A IA deve entrar depois que o modelo de dados estiver sólido. Caso contrário,
+ela vira apenas uma camada bonita em cima de dados ruins.
+
+Possibilidades:
+
+• Assistente para montar squad
+• Assistente para responder perguntas sobre capacidade
+• Leitura de propostas e extração automática de necessidades
+• Sugestão de perfis com explicação
+• Detecção de riscos de projeto por alocação instável
+• Geração de plano de staffing
+• Geração de justificativa para contratação
+• Chat interno do tipo:
+  "Quem eu tenho disponível para um projeto Python + Azure em julho?"
+
+
+================================================================================
+FIM DO DOCUMENTO
+================================================================================

@@ -1,0 +1,119 @@
+================================================================================
+  IAS — DEPLOY AZURE (DEMO ÚNICA)
+  Atualizado: 2026-06-21
+================================================================================
+
+CENÁRIO
+-------
+  Demo única, sem login. Tenant GUID configurado no menu dev do frontend.
+  Arquitetura: Static Web Apps (UI) + App Service (API) + Azure MySQL Flexible.
+
+PRÉ-REQUISITOS
+--------------
+  - Azure CLI (az login)
+  - Node 22, .NET 10 SDK
+  - Resource Group criado (ex.: rg-ias-demo)
+
+RECURSOS AZURE (PORTAL OU CLI)
+------------------------------
+  1. Azure Database for MySQL Flexible Server 8.x
+     - Banco: ias_demo (utf8mb4)
+     - Firewall: "Allow public access from Azure services" + seu IP para migrations
+     - Anote: host, user, password
+
+  2. App Service (Linux ou Windows)
+     - Runtime: .NET 10
+     - Plano: B1 ou superior (evitar Free — cold start na demo)
+     - Nome: ex. ias-api-demo → https://ias-api-demo.azurewebsites.net
+
+  3. Static Web App
+     - Sem API integrada (API fica no App Service)
+     - Nome: ex. ias-web-demo → https://xxx.azurestaticapps.net
+
+CONFIGURAÇÃO DA API (APP SERVICE)
+---------------------------------
+  Portal → App Service → Configuration → Application settings
+
+  Referência completa: infra/azure/app-settings.sample.json
+
+  Obrigatório:
+    ConnectionStrings__Default
+      Server=HOST.mysql.database.azure.com;Port=3306;Database=ias_demo;
+      User=USER;Password=SENHA;SslMode=Required;
+
+    Cors__AllowedOrigins__0
+      https://SEU-STATIC-WEB-APP.azurestaticapps.net
+
+  Recomendado para demo:
+    FeatureFlags__EnableSwagger = true
+    ASPNETCORE_ENVIRONMENT = Production
+    Database__MySqlVersion = 8.0.36
+
+  Salvar e reiniciar o App Service.
+
+MIGRATIONS (UMA VEZ)
+--------------------
+  Da sua máquina (IP liberado no firewall MySQL):
+
+    cd scripts
+    .\apply-migrations-azure.ps1 -ConnectionString "Server=...;SslMode=Required;..."
+
+  Ou manualmente:
+    cd Backend\src\IAS.Api
+    $env:ConnectionStrings__Default = "Server=...;SslMode=Required;..."
+    dotnet ef database update --project ../IAS.Infrastructure
+
+SEED DA DEMO
+------------
+  1. Abra https://SEU-APP-SERVICE.azurewebsites.net/swagger
+  2. POST /api/v1/tenants  →  { "name": "Consultoria Demo" }
+  3. Copie o id (GUID) retornado
+  4. Crie skills, people, projects via Swagger (header X-Tenant-Id = GUID)
+  5. No frontend (SWA), menu ⚙ → cole o tenant GUID
+
+DEPLOY DA API
+-------------
+    cd scripts
+    .\deploy-api-azure.ps1 -ResourceGroup rg-ias-demo -AppName ias-api-demo
+
+  Valide: GET https://ias-api-demo.azurewebsites.net/api/v1/health
+    → status healthy, database connected
+
+DEPLOY DO FRONTEND
+------------------
+  Opção A — script (token SWA no portal):
+    cd scripts
+    .\deploy-frontend-azure.ps1 `
+      -ApiUrl "https://ias-api-demo.azurewebsites.net" `
+      -DeploymentToken "SEU_TOKEN"
+
+  Opção B — manual:
+    cd Frontend
+    copy .env.production.example .env.production
+    # editar VITE_API_URL
+    npm ci && npm run build
+    npx @azure/static-web-apps-cli deploy ./dist --deployment-token TOKEN
+
+  O build embute VITE_API_URL no bundle — alterou a URL da API? rebuild + redeploy.
+
+CHECKLIST PRÉ-DEMO
+------------------
+  [ ] Health OK + database connected
+  [ ] CORS: front chama API sem erro no console (F12)
+  [ ] Tenant GUID salvo no frontend
+  [ ] Dashboard carrega KPIs
+  [ ] F5 em /capacity e /matching (SPA fallback)
+  [ ] Ensaio 2–3 fluxos (capacidade, matching, financeiro)
+
+PÓS-DEMO
+--------
+  Excluir Resource Group para parar cobrança (MySQL + App Service + SWA).
+
+REFERÊNCIAS
+-----------
+  infra/azure/app-settings.sample.json
+  Frontend/.env.production.example
+  Frontend/public/staticwebapp.config.json
+  docs/roadmap/ROADMAP.md (Cloud-ready)
+
+================================================================================

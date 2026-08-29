@@ -1,0 +1,11 @@
+{
+  "_comment": "Referência para App Service → Configuration → Application settings. Use __ para aninhar.",
+  "ASPNETCORE_ENVIRONMENT": "Production",
+  "ConnectionStrings__Default": "Server=SEU-SERVidor.mysql.database.azure.com;Port=3306;Database=ias_demo;User=SEU_USUARIO;Password=SUA_SENHA;SslMode=Required;",
+  "Database__MySqlVersion": "8.0.36",
+  "Cors__AllowedOrigins__0": "https://SEU-STATIC-WEB-APP.azurestaticapps.net",
+  "FeatureFlags__EnableSwagger": "true",
+  "Auth__Jwt__Secret": "troque-por-segredo-com-pelo-menos-32-caracteres!!",
+  "Auth__Jwt__Issuer": "IAS",
+  "Auth__Jwt__Audience": "IAS.Api"
+}
