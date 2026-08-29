@@ -234,7 +234,7 @@ export type MessageKey =
   | 'pages.conflicts.description'
 
 const pt: Record<MessageKey, string> = {
-  'app.name': 'KAS',
+  'app.name': 'IAS',
   'app.tagline': 'Gestão de alocação',
   'nav.dashboard': 'Painel',
   'nav.skills': 'Skills',
@@ -472,7 +472,7 @@ const pt: Record<MessageKey, string> = {
 }
 
 const en: Record<MessageKey, string> = {
-  'app.name': 'KAS',
+  'app.name': 'IAS',
   'app.tagline': 'Allocation management',
   'nav.dashboard': 'Dashboard',
   'nav.skills': 'Skills',

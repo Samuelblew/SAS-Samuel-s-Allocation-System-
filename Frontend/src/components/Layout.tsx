@@ -1,4 +1,4 @@
-import { Suspense, lazy, useState } from 'react'
+import { useState } from 'react'
 import { Link, Outlet, useLocation } from 'react-router-dom'
 import { DevSettingsMenu } from './DevSettingsMenu'
 import { GroupSubNav } from './GroupSubNav'
@@ -17,19 +17,8 @@ import {
   getVisibleNavGroups,
 } from '../lib/nav'
 
-const InteractiveLogo = lazy(() =>
-  import('./InteractiveLogo').then((module) => ({ default: module.InteractiveLogo })),
-)
-
-function LogoFallback() {
-  return (
-    <img
-      src="/brand/logo-fallback.png"
-      alt=""
-      className="ias-interactive-logo ias-header-brand-logo"
-      aria-hidden
-    />
-  )
+function BrandMark() {
+  return <img src="/brand/mark.png" alt="" className="ias-header-brand-logo" aria-hidden />
 }
 
 function MenuIcon() {
@@ -61,9 +50,7 @@ export function Layout() {
       <div className="ias-app-frame">
         <header className="ias-header-pill">
           <Link to="/" className="ias-header-brand">
-            <Suspense fallback={<LogoFallback />}>
-              <InteractiveLogo className="ias-header-brand-logo" />
-            </Suspense>
+            <BrandMark />
             <span className="ias-brand-name ias-header-brand-name">{t('app.name')}</span>
           </Link>
 

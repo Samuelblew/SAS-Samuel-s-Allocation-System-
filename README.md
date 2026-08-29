@@ -8,7 +8,7 @@ Plataforma de alocação de pessoas em consultorias: visibilidade operacional, c
 
 Este projeto nasceu de uma demanda real: fui requisitado para desenvolver um sistema interno de alocação de pessoas para gerentes de projeto em uma consultoria onde trabalhei. O MVP seria apresentado internamente, mas foi descartado — meu desligamento da empresa aconteceu antes da apresentação, e o projeto ficou sem dono. Depois de sair, resgatei o código, removi toda referência à empresa original, refiz partes do meu jeito e publiquei aqui para não deixar o trabalho se perder.
 
-Um detalhe do frontend: o logo animado no cabeçalho é um modelo 3D interativo (gira ao passar o mouse, responde a clique) que modelei eu mesmo no Blender e integrei via React Three Fiber/Three.js — dá pra ver o projeto de origem em [`Frontend/3D/`](Frontend/3D/).
+Um detalhe do frontend: o cabeçalho tinha um logo 3D interativo (gira ao passar o mouse, responde a clique), modelado por mim no Blender e integrado via React Three Fiber/Three.js. Essa peça carregava a identidade visual da empresa anterior, então os arquivos de imagem (`.glb` e a imagem de fallback) foram removidos do projeto — mas a funcionalidade em si não foi apagada, só desabilitada: o componente continua em [`Frontend/src/components/InteractiveLogo.tsx`](Frontend/src/components/InteractiveLogo.tsx), funcional e pronto para carregar um novo modelo 3D sem marca de terceiros. O ícone estático "IAS" que aparece hoje no cabeçalho ([`Frontend/src/components/Layout.tsx`](Frontend/src/components/Layout.tsx)) ocupa esse mesmo lugar como placeholder — é o template de onde a versão 3D nova entra quando eu tiver um modelo próprio pronto.
 
 ## Documentação
 
